@@ -100,7 +100,6 @@ const DEFAULT_GITHUB_BASE_URL: &str =
     "https://raw.githubusercontent.com/robyoung/dicom-test-files/master/data/";
 
 const RAW_GITHUBUSERCONTENT_URL: &str = "https://raw.githubusercontent.com";
-const GITHUB_TRIMMED_URL: &str = "https://raw.githubusercontent.com/robyoung/dicom-test-files/";
 
 /// Determine the base URL in this environment.
 ///
