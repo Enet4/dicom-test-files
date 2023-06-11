@@ -99,6 +99,7 @@ pub(crate) fn get_data_path() -> PathBuf {
 const DEFAULT_GITHUB_BASE_URL: &str =
     "https://raw.githubusercontent.com/robyoung/dicom-test-files/master/data/";
 
+const RAW_GITHUBUSERCONTENT_URL: &str = "https://raw.githubusercontent.com";
 const GITHUB_TRIMMED_URL: &str = "https://raw.githubusercontent.com/robyoung/dicom-test-files/";
 
 /// Determine the base URL in this environment.
@@ -107,27 +108,35 @@ const GITHUB_TRIMMED_URL: &str = "https://raw.githubusercontent.com/robyoung/dic
 /// use the contents provided through the pull request's head branch.
 fn base_url() -> Result<Cow<'static, str>, VarError> {
     if let Ok(url) = std::env::var("DICOM_TEST_FILES_URL") {
-        return Ok(format!("{url}/").into());
+        if url != "" {
+            eprintln!("[dicom-test-files] using override in DICOM_TEST_FILES_URL");
+            return Ok(format!("{url}/").into());
+        }
     }
 
     // CI: always true on GitHub Actions
     let ci = std::env::var("CI").unwrap_or_default();
     if ci == "true" {
+        eprintln!("In CI");
         // GITHUB_REPOSITORY
         let github_repository = std::env::var("GITHUB_REPOSITORY").unwrap_or_default();
-        if github_repository == "robyoung/dicom-test-files" {
+
+        // only do this if target repository is dicom-test-files
+        if github_repository.ends_with("/dicom-test-files") {
             // GITHUB_EVENT_NAME: can be pull_request
             let github_event_name = std::env::var("GITHUB_EVENT_NAME")?;
             if github_event_name == "pull_request" {
                 // GITHUB_HEAD_REF: name of the branch when it's a pull request
                 let github_head_ref = std::env::var("GITHUB_HEAD_REF")?;
-                let url = format!("{}{}/data/", GITHUB_TRIMMED_URL, github_head_ref);
+                let url = format!("{}/{}/{}/data/", RAW_GITHUBUSERCONTENT_URL, github_repository, github_head_ref);
 
+                eprintln!("Using URL {url}");
                 return Ok(url.into());
             }
         }
     }
 
+    eprintln!("Using URL {DEFAULT_GITHUB_BASE_URL}");
     Ok(DEFAULT_GITHUB_BASE_URL.into())
 }
 
